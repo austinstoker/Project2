@@ -43,19 +43,22 @@ phifun = @(x,y) U*(sqrt(x^2+y^2)-((a)^2)/sqrt(x^2+y^2))*y + Gam_hat*log(sqrt(x^2
 
 
 syms x y;
-tim = diff(phifun(x,y),y);
-uAnalytic= @(x,y) tim;
-% dfy_hat=subs(dfy,y,yval);
-% 
-% uAnalytic = @(xval,yval) subs(dfy_hat,x,xval);
+uA_hat = diff(phifun(x,y),y);
+vA_hat = diff(phifun(x,y),x);
+uAnalytic=inline(char(uA_hat));
+vAnalytic=inline(char(vA_hat));
+
 
 V0 = get_dfdx_hat(pointCoords,edges,xfun);
 
 dfdx = get_dfdx_hat(pointCoords,edges,phifun)./V0;
 dfdy = -1*get_dfdy_hat(pointCoords,edges,phifun)./V0;
 
-u=dfdy;
-v=-dfdx;
+u=zeros(numPoints,1)
+for i=1:numPoints
+    u(i)=uAnalytic(pointCoords(i,1),pointCoords(i,2));
+    v(i)=vAnalytic(pointCoords(i,1),pointCoords(i,2));
+end
 xpt=pointCoords(:,1);
 ypt=pointCoords(:,2);
 
@@ -87,14 +90,14 @@ for i=1:numCells
         j = j+1;
     end
 end
-% 
-% for i=1:numPoints
-%     x1 = pointCoords(i,1);
-%     y1 = pointCoords(i,2);
-%     syms x y;
-%     uA(i) = uAnalytic(x1,y1);%subs(diff(phifun(x,y),y),y = y1,x=x1);
-%     %vA(i) = subs(diff(phifun(x,y),x),y = y1,x=x1);
-% end
+
+for i=1:numPoints
+    x1 = pointCoords(i,1);
+    y1 = pointCoords(i,2);
+    syms x y;
+    uA(i) = uAnalytic(x1,y1);%subs(diff(phifun(x,y),y),y = y1,x=x1);
+    vA(i) = vAnalytic(x1,y1);%subs(diff(phifun(x,y),y),y = y1,x=x1);
+end
 
 Drag = sum(cylP(:,1))*2;
 Lift = sum(cylP(:,2))*2; %Uhh not sure how to justify the *2 but it works
@@ -102,7 +105,7 @@ Lift = sum(cylP(:,2))*2; %Uhh not sure how to justify the *2 but it works
 DragAnalytic = 0;
 LiftAnalytic = ro*U*Gam;
 
-% E = (uA'-u).^2
+E = sqrt(sum((uA'-u).^2)/numPoints)
 % E=LiftAnalytic-Lift;
 
 % z = P;

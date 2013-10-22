@@ -10,7 +10,7 @@ DoPlots=true;
 
 a=1/2;
 U=1;
-Gam = 2*pi; %4*pi*a*U;
+Gam = (1)*2*pi; %4*pi*a*U;
 Gam_hat=Gam/(2*pi);
 Pinf = 1000;
 ro = 1;
@@ -39,23 +39,27 @@ numCells=size(edges,1);
 xfun = @(x,y) x;
 phiHalfBodyfun = @(x,y) U*y-U*(a^2)*y/(x^2+y^2);
 
-phifun = @(x,y) U*(sqrt(x^2+y^2)-((a)^2)/sqrt(x^2+y^2))*y + Gam_hat*log(sqrt(x^2+y^2)/a);
+psifun = @(x,y) U*(sqrt(x^2+y^2)-((a)^2)/sqrt(x^2+y^2))*y + Gam_hat*log(sqrt(x^2+y^2)/a);
 
 
 syms x y;
-uA_hat = diff(phifun(x,y),y);
-vA_hat = diff(phifun(x,y),x);
-uAnalytic=inline(char(uA_hat));
-vAnalytic=inline(char(vA_hat));
+uA_hat = diff(psifun(x,y),y);
+vA_hat = -diff(psifun(x,y),x);
+ufun=inline(char(uA_hat));
+vfun=inline(char(vA_hat));
 
 
 V0 = get_dfdx_hat(pointCoords,edges,xfun);
 
-dfdx = get_dfdx_hat(pointCoords,edges,uAnalytic)./V0;
-dfdy = -1*get_dfdy_hat(pointCoords,edges,vAnalytic)./V0;
+dfdx = get_dfdx_hat(pointCoords,edges,psifun)./V0;
+dfdy = -1*get_dfdy_hat(pointCoords,edges,psifun)./V0;
 
-u=dfdy;
-v=-dfdx;
+u=zeros(numPoints,1);
+v=zeros(numPoints,1);
+for i=1:numPoints
+    u(i)=ufun(pointCoords(i,1),pointCoords(i,2));
+    v(i)=vfun(pointCoords(i,1),pointCoords(i,2));
+end
 xpt=pointCoords(:,1);
 ypt=pointCoords(:,2);
 
@@ -88,21 +92,13 @@ for i=1:numCells
     end
 end
 
-for i=1:numPoints
-    x1 = pointCoords(i,1);
-    y1 = pointCoords(i,2);
-    syms x y;
-    uA(i) = uAnalytic(x1,y1);%subs(diff(phifun(x,y),y),y = y1,x=x1);
-    vA(i) = vAnalytic(x1,y1);%subs(diff(phifun(x,y),y),y = y1,x=x1);
-end
-
 Drag = sum(cylP(:,1))*2;
 Lift = sum(cylP(:,2))*2; %Uhh not sure how to justify the *2 but it works
 
 DragAnalytic = 0;
 LiftAnalytic = ro*U*Gam;
 
-E_RMS = sqrt(sum((uA'-u).^2)/numPoints)
+% E = sqrt(sum((uA'-u).^2)/numPoints)
 % E=LiftAnalytic-Lift;
 
 % z = P;
