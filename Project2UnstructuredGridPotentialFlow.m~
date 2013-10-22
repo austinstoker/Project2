@@ -51,14 +51,32 @@ vA_hat = -diff(psifun(x,y),x);
 ufun=inline(char(uA_hat));
 vfun=inline(char(vA_hat));
 
+%anaytic vorticity and divergence
+dudxA_hat = diff(ufun(x,y),x);
+dudxA_fun=inline(char(dudxA_hat));
+
+dvdxA_hat = diff(vfun(x,y),x);
+dvdxA_fun=inline(char(dvdxA_hat));
+
+dudyA_hat = diff(ufun(x,y),y);
+dudyA_fun=inline(char(dudyA_hat));
+
+dvdyA_hat = diff(vfun(x,y),y);
+dvdyA_fun=inline(char(dvdyA_hat));
+
 %find the volume of each super cell around each node
 V0 = get_dfdx_hat(pointCoords,edges,xfun);
 
-%preform
+%preform all the differentiations needed for vorticity and velocity
+%divergence
 dudx = get_dfdx_hat(pointCoords,edges,ufun)./V0;
 dvdx = get_dfdx_hat(pointCoords,edges,vfun)./V0;
 dudy = -1*get_dfdy_hat(pointCoords,edges,ufun)./V0;
 dvdy = -1*get_dfdy_hat(pointCoords,edges,vfun)./V0;
+
+%assemble vorticity and velocity divergence
+vorticity = dvdx-dudy;
+vel_divergence = dudx+dvdy;
 
 %populate u and v based on the analytic solution
 u=zeros(numPoints,1);
@@ -107,9 +125,19 @@ Lift = sum(cylP(:,2))*2; %Uhh not sure how to justify the *2 but it works
 DragAnalytic = 0;
 LiftAnalytic = ro*U*Gam;
 
+%evaluate analytic solutions for vorticity and vel_div at each point
+vorticityA=zeros(numPoints,1);
+vel_divergenceA=zeros(numPoints,1);
+for i=1:numPoints
+    x1 = pointCoords(i,1);
+    y1 = pointCoords(i,2);
+    vorticityA(i) = dvdxA_fun(x1,y1)-dudyA_fun(x1,y1);
+    vel_divergenceA(i) = dudxA_fun(x1,y1)+dvdyA_fun(x1,y1);
+end
+
 
 % Error analysis
 
-
+E_rms_vorti = sqrt(vor
 
 
