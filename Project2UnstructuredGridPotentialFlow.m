@@ -8,7 +8,7 @@ clc
 %program options
 GridStart=1;
 GridEnd=1;
-mycase=3;
+%mycase=3;
 DoPlots=true;
 
 
@@ -111,6 +111,7 @@ for k=GridStart:GridEnd
 
     %Calculate the forces acting on the cylinder at each edge segment
     j=1;
+    tauij=zeros(numCells,2);
     for i=1:numCells
         if edges(i,5)==1 % is a cylinder boundary
             n1 = edges(i,1);
@@ -122,15 +123,16 @@ for k=GridStart:GridEnd
 
             %create a scaled normal vector
             ds = [(y2-y1) -(x2-x1)]; %x and y are swapped because dy creates force in the x direction
-
-            cylP(j,:) = ((P(n1)+P(n2))/2*ds); %avgP*normalvect
+            tauij(n1,:) = tauij(n1,:)+P(n1)*ds;
+            tauij(n2,:) = tauij(n2,:)+P(n2)*ds;
+            %cylP(j,:) = ((P(n1)+P(n2))/2*ds); %avgP*normalvect
             j = j+1;
         end
     end
 
     %sum the forces around the edge to get lift and drag
-    Drag = sum(cylP(:,1))*2;
-    Lift = sum(cylP(:,2))*2; %Uhh not sure how to justify the *2 but it works
+    Drag = sum(tauij(:,1));
+    Lift = sum(tauij(:,2)); %Uhh not sure how to justify the *2 but it works
 
     %the analytic solutions for Lift and drag on a potential flow rotating
     %cylinder
